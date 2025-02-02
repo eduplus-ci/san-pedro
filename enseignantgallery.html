@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr" style="padding-top: 95px;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Edu'Plus San-Pédro</title>
+  <meta name="description" content="Education et renforcement de capacité..." />
+  <!-- Open Graph -->
+  <meta property="og:title" content="Edu'Plus">
+  <meta property="og:description" content="Education et renforcement de capacité...">
+  <meta property="og:image" content=" https://eduplus-ci.github.io/san-pedro/images/logo/LOGO.jpg" />
+  <meta property="og:url" content="https://eduplus-ci.github.io/san-pedro/images/logo/LOGO.jpg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="images/logo/LOGO.png"/>
+
+
+    <!-- Système de vue -->
+<script type="module">
+  // Importer les fonctions nécessaires du SDK Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+
+  // Configuration de ton application Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCIbhV4z1XTnptBldtJxfh3eK-4Wnv1GQA",
+    authDomain: "tahbi-dbda2.firebaseapp.com",
+    projectId: "tahbi-dbda2",
+    storageBucket: "tahbi-dbda2.firebasestorage.app",
+    messagingSenderId: "574600128142",
+    appId: "1:574600128142:web:35e31de1fcce720ce80bdf"
+  };
+
+  // Initialiser Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Référence au document Firestore pour les vues
+  const viewsRef = doc(db, 'views', 'siteViews');
+
+  // Fonction pour incrémenter le compteur si nécessaire
+  async function incrementViewCount() {
+    const currentDate = new Date().toISOString().split('T')[0]; // Récupérer la date actuelle sous forme YYYY-MM-DD
+
+    // Vérifier si l'utilisateur a déjà incrémenté aujourd'hui
+    if (localStorage.getItem('lastIncrementDate') === currentDate) {
+      // Si le compteur a déjà été incrémenté aujourd'hui
+      const incrementCount = parseInt(localStorage.getItem('incrementCount')) || 0;
+      if (incrementCount >= 2) {
+        console.log("Limite d'incrémentation atteinte pour aujourd'hui.");
+        return; // Ne rien faire si la limite de 2 incréments est atteinte
+      }
+      // Si moins de 2 incréments, on permet l'incrémentation
+      localStorage.setItem('incrementCount', incrementCount + 1);
+    } else {
+      // Si c'est un nouveau jour, réinitialiser les incréments
+      localStorage.setItem('lastIncrementDate', currentDate);
+      localStorage.setItem('incrementCount', 1); // Première incrémentation
+    }
+
+    try {
+      const docSnap = await getDoc(viewsRef);
+      if (docSnap.exists()) {
+        // Si le document existe, incrémenter le compteur de vues dans Firestore
+        await updateDoc(viewsRef, { count: docSnap.data().count + 1 });
+      } else {
+        // Si le document n'existe pas, initialiser le compteur à 1
+        await updateDoc(viewsRef, { count: 1 });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour des vues :", error);
+    }
+  }
+
+  // Fonction pour afficher le nombre de vues sur la page
+  async function displayViewCount() {
+    try {
+      const docSnap = await getDoc(viewsRef);
+      if (docSnap.exists()) {
+        document.getElementById('viewsCounter').textContent = docSnap.data().count;
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'affichage des vues :", error);
+    }
+  }
+
+  // Exécuter les fonctions lorsque la page se charge
+  window.onload = function() {
+    incrementViewCount();
+    displayViewCount();
+  };
+</script>
+
+
+
+
+</head>
+<body>
+    <header> 
+        <nav class="navv">
+            <div class="logo" style="text-align: center;">
+                
+                
+
+                 <img src="images/logo/LOGO.png" height="80px" width="80px" style="border-radius: 45%;" id="sizelogo" klopioipo > <p style="color: rgb(66, 238, 106); font-size: 14px; position: absolute; padding-top: 10px;">Nombre de visiteurs : <span id="viewsCounter">Chargement...</span></p>
+
+
+                
+                 
+                 
+
+
+
+
+                 
+            </div>
+            <div class="menu-toggle" id="mobile-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-links">
+                
+                <li ><a href="index.html#home" id="lis">Accueil</a></li>
+                <li ><a href="pregallery.html " id="lis">Gallery</a></li>
+                <li ><a href="bilan.html" id="lis">Bilan</a></li>
+                <li ><a href="index.html#contact" id="lis">Contact</a></li>
+            
+            </ul>
+           
+        </nav>
+    </header>
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class="globale">
+
+
+    
+        <div class="gallery">
+            
+            <figure  style="text-decoration: none;" > <a href="images/enseignents/photo1.jpg"><img  src="images/enseignents/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br> Salut<br>J'suis<strong> FOFANA VASSINDOU</strong>, étudiant en M1 d'Agriculture durable et valorisation des bioressources à l'Université Polytechnique de san-pedro. Je suis également enseignant à Aide-Aux-Parents en  Mathématiques, Physique-chimie et SVT.</figure>
+            <figure  style="text-decoration: none;" > <a href="images/enseignents/photo2.jpg"><img src="images/enseignents/photo2.jpg" alt="Photo 2"  class="gallery1" loading="lazy"> </a> <br> <br>Bonjour je suis <strong>Traore Mamadou </strong>étudiant en licence 3 Académique à l'université polytechnique de San Pedro. <br>Dans la filière Tourisme Espace et Société</figure>
+            <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br> <strong>ACTUALISATION EN COURS...</strong> </figure>
+            <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+            <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+            <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+            <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+            <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+
+
+           
+            
+        </div>
+
+        <style>
+
+        .button-container {
+            display: flex; /* Utilise Flexbox pour aligner les éléments horizontalement */
+            gap: 10px; /* Ajoute un espace entre les boutons */
+            justify-content: center; /* Centrer horizontalement les boutons dans le conteneur */
+        }
+
+        .button-container back-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .back-button {
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            background-color:  #66bd3a;
+        }
+
+
+
+
+        
+        </style>
+
+
+     <div class="button-container">
+
+        <button onclick="history.back()" class="back-button">Retour</button>
+        <button  onclick="lient" class="back-button">Suivant</button>
+        
+
+     </div>   
+    
+    
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+    <footer style="font-size: 10px;">
+        <p> &copy; 2024 - Aide Aux Parents, Coding by <a href="https://wa.me/+2250506327207"   style=" color: white;text-decoration: none; font-style: italic;">&lt;/&gt;Tah Bi Youan Arnaud&lt;/&gt;</a>, Tous droits réservés.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
