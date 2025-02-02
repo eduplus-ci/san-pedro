@@ -27,7 +27,7 @@ function defilementAutomatique() {
 }
 
 // Défilement automatique toutes les 3 secondes
-setInterval(defilementAutomatique, 5000);
+setInterval(defilementAutomatique, 6000);
 
 // Afficher le premier témoignage par défaut
 afficherTemoignage(currentIndex);
