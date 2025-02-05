@@ -310,7 +310,7 @@ input[type="text"] {
 }
 
 .hero-section {
-    background-image: url(images/mmm.jpg);
+    background-image: url(images/headfond.jpg);
     background-size: cover; /* Pour couvrir toute la zone du body */
     background-repeat: no-repeat; /* Pour éviter la répétition de l'image */
     height: 100vh;
