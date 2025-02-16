@@ -15,11 +15,12 @@
   <link rel="icon" href="images/logo/LOGO.png"/>
 
 
-    <!-- Système de vue -->
+<!-- Système de vue avec gestion de l'affichage du nombre de vues -->
 <script type="module">
   // Importer les fonctions nécessaires du SDK Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
 
   // Configuration de ton application Firebase
   const firebaseConfig = {
@@ -34,41 +35,80 @@
   // Initialiser Firebase
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
-  // Référence au document Firestore pour les vues
+  // Référence au document Firestore pour les vues et utilisateurs anonymes
   const viewsRef = doc(db, 'views', 'siteViews');
+  const usersRef = doc(db, 'user_views', 'allUsers');
+
+  // Fonction pour se connecter anonymement
+  async function loginAnonymously() {
+    try {
+      const userCredential = await signInAnonymously(auth);
+      const user = userCredential.user;
+      console.log("Utilisateur connecté de manière anonyme :", user.uid);
+      return user.uid;  // Retourner l'ID de l'utilisateur anonyme
+    } catch (error) {
+      console.error("Erreur de connexion anonyme :", error.message);
+    }
+  }
 
   // Fonction pour incrémenter le compteur si nécessaire
   async function incrementViewCount() {
-    const currentDate = new Date().toISOString().split('T')[0]; // Récupérer la date actuelle sous forme YYYY-MM-DD
-
-    // Vérifier si l'utilisateur a déjà incrémenté aujourd'hui
-    if (localStorage.getItem('lastIncrementDate') === currentDate) {
-      // Si le compteur a déjà été incrémenté aujourd'hui
-      const incrementCount = parseInt(localStorage.getItem('incrementCount')) || 0;
-      if (incrementCount >= 2) {
-        console.log("Limite d'incrémentation atteinte pour aujourd'hui.");
-        return; // Ne rien faire si la limite de 2 incréments est atteinte
-      }
-      // Si moins de 2 incréments, on permet l'incrémentation
-      localStorage.setItem('incrementCount', incrementCount + 1);
-    } else {
-      // Si c'est un nouveau jour, réinitialiser les incréments
-      localStorage.setItem('lastIncrementDate', currentDate);
-      localStorage.setItem('incrementCount', 1); // Première incrémentation
-    }
+    const userId = await loginAnonymously();  // Obtenir l'ID de l'utilisateur anonyme
+    const currentDate = new Date().toISOString().split('T')[0]; // Date actuelle en format YYYY-MM-DD
 
     try {
-      const docSnap = await getDoc(viewsRef);
-      if (docSnap.exists()) {
-        // Si le document existe, incrémenter le compteur de vues dans Firestore
-        await updateDoc(viewsRef, { count: docSnap.data().count + 1 });
-      } else {
-        // Si le document n'existe pas, initialiser le compteur à 1
-        await updateDoc(viewsRef, { count: 1 });
+      const docSnap = await getDoc(usersRef);
+      let usersData = docSnap.exists() ? docSnap.data() : {};
+
+      // Vérifier si cet utilisateur existe et ses données sont toujours valides
+      const userData = usersData[userId] || { lastIncrementDate: null, incrementCount: 0, creationTime: new Date().toISOString() };
+
+      // Vérifier si les données de l'utilisateur sont expirées (plus de 24 heures)
+      const creationTime = new Date(userData.creationTime);
+      const currentTime = new Date();
+      const timeDifference = currentTime - creationTime; // Différence en millisecondes
+      const dayInMillis = 24 * 60 * 60 * 1000; // 24 heures en millisecondes
+
+      if (timeDifference > dayInMillis) {
+        // Si plus de 24 heures, réinitialiser les données de l'utilisateur
+        userData.lastIncrementDate = null;
+        userData.incrementCount = 0;
+        userData.creationTime = currentTime.toISOString();  // Réinitialiser le temps de création
       }
+
+      // Vérifier si l'utilisateur a déjà incrémenté aujourd'hui
+      if (userData.lastIncrementDate === currentDate) {
+        // Si l'utilisateur a déjà incrémenté aujourd'hui
+        if (userData.incrementCount >= 2) {
+          console.log("Limite d'incrémentation atteinte pour aujourd'hui.");
+          return; // Ne rien faire si la limite de 2 incréments est atteinte
+        }
+        // Si moins de 2 incréments, on permet l'incrémentation
+        userData.incrementCount += 1;
+      } else {
+        // Si c'est un nouveau jour, réinitialiser les incréments
+        userData.lastIncrementDate = currentDate;
+        userData.incrementCount = 1; // Première incrémentation de la journée
+      }
+
+      // Mettre à jour les données de l'utilisateur dans le document global
+      usersData[userId] = userData;
+
+      // Enregistrer ou mettre à jour les données dans Firestore sous un seul document
+      await setDoc(usersRef, usersData);
+
+      // Mettre à jour le compteur global des vues
+      const viewsSnap = await getDoc(viewsRef);
+      if (viewsSnap.exists()) {
+        await updateDoc(viewsRef, { count: viewsSnap.data().count + 1 });
+      } else {
+        await setDoc(viewsRef, { count: 1 });
+      }
+
     } catch (error) {
-      console.error("Erreur lors de la mise à jour des vues :", error);
+      console.error("Erreur lors de l'incrémentation du compteur de vues :", error);
     }
   }
 
