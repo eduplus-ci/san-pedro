@@ -364,7 +364,13 @@ src="https://www.facebook.com/tr?id=2096066194164987&ev=PageView&noscript=1"
         </a>
 
         <a href="https://wa.me/+2250769951079?text=Bonjour Edu'Plus, j'aimerais échanger avec un responsable..."   target="_blank" style="font-size: 16px; text-decoration: none; padding: 0;">
-            <img src="images/logo/WhatsApp.png" alt="WhatsApp" class="zoom-image" >
+            <img src="images/logo/WhatsApp.png" alt="WhatsApp" class="zoom-image" id="ClientLink" >
+         
+          <script>
+  document.getElementById('ClientLink').addEventListener('click', function() {
+    fbq('track', 'ContactWhatsApp');
+  });
+</script>
 
         </a>
         
