@@ -231,11 +231,7 @@ src="https://www.facebook.com/tr?id=2096066194164987&ev=PageView&noscript=1"
     
     <br>
      <a href="https://wa.me/+2250769951079?text= Bonjour Edu'Plus, j'aimerais integrer votre structure en tant qu'enseignant." class="button" target="_blank" style="font-weight: bold" id="rejoind">*Nous Rejoindre*</a>  </section>
-  <script>
-  document.getElementById('rejoind').addEventListener('click', function() {
-    fbq('track', 'ContactWhatsApp');
-  });
-</script>
+
     <br>
     <section style="text-align: center; margin: 2px;">
         <h2>Présentation</h2> <br>
@@ -366,11 +362,7 @@ src="https://www.facebook.com/tr?id=2096066194164987&ev=PageView&noscript=1"
         <a href="https://wa.me/+2250769951079?text=Bonjour Edu'Plus, j'aimerais échanger avec un responsable..."   target="_blank" style="font-size: 16px; text-decoration: none; padding: 0;">
             <img src="images/logo/WhatsApp.png" alt="WhatsApp" class="zoom-image" id="ClientLink" >
          
-          <script>
-  document.getElementById('ClientLink').addEventListener('click', function() {
-    fbq('track', 'ContactWhatsApp');
-  });
-</script>
+
 
         </a>
         
@@ -383,6 +375,7 @@ src="https://www.facebook.com/tr?id=2096066194164987&ev=PageView&noscript=1"
 <div>
     <a href="https://www.google.ci/maps/place/Universit%C3%A9+Polytechnique+de+San+Pedro/@4.7854329,-6.7008582,17z/data=!3m1!4b1!4m6!3m5!1s0xf9617bcfeb94f73:0x2ea65489de1684bd!8m2!3d4.7854329!4d-6.6982833!16s%2Fg%2F11tcsqd27y?hl=fr&entry=ttu&g_ep=EgoyMDI1MDEwNy4wIKXMDSoASAFQAw%3D%3D"   target="_blank" style="font-size: 16px; text-decoration: none; padding: 0;" >
         <img src="images/logo/localisation.png" alt="localisation" class="zoom-image" id="localisation-logo" >
+
 
     </a ><span style="position: relative;font-size: x-large;"> <strong> université de san-pedro</strong></span>
     
@@ -558,6 +551,26 @@ src="https://www.facebook.com/tr?id=2096066194164987&ev=PageView&noscript=1"
     </footer>
 
     <script src="script.js"></script>
+  
+    <script>
+  document.getElementById('rejoind').addEventListener('click', function() {
+    fbq('track', 'ContactWhatsApp');
+  });
+</script>
+
+            <script>
+  document.getElementById('ClientLink').addEventListener('click', function() {
+    fbq('track', 'ContactWhatsApp');
+  });
+</script>
+
+  
+      <script>
+  document.getElementById('localisation-logo').addEventListener('click', function() {
+    fbq('track', 'Position');
+  });
+</script>
+  
 </body>
 <!-- TAH BI YOUAN ARNAUD: 0574119560-->
 </html>
