@@ -1,0 +1,578 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '2096066194164987');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=2096066194164987&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Edu'Plus San-Pédro</title>
+    <meta name="description" content="Education et renforcement de capacité..." />
+    <!-- Open Graph -->
+    <meta property="og:title" content="Edu'Plus">
+    <meta property="og:description" content="Education et renforcement de capacité...">
+    <meta property="og:image" content=" https://eduplus-ci.github.io/san-pedro/images/logo/LOGO.jpg" />
+    <meta property="og:url" content="https://eduplus-ci.github.io/san-pedro/images/logo/LOGO.jpg">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="images/logo/LOGO.png"/>
+    
+<!-- Système de vue avec gestion de l'affichage du nombre de vues -->
+<script type="module">
+  // Importer les fonctions nécessaires du SDK Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+
+  // Configuration de ton application Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCIbhV4z1XTnptBldtJxfh3eK-4Wnv1GQA",
+    authDomain: "tahbi-dbda2.firebaseapp.com",
+    projectId: "tahbi-dbda2",
+    storageBucket: "tahbi-dbda2.firebasestorage.app",
+    messagingSenderId: "574600128142",
+    appId: "1:574600128142:web:35e31de1fcce720ce80bdf"
+  };
+
+  // Initialiser Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // Référence au document Firestore pour les vues et utilisateurs anonymes
+  const viewsRef = doc(db, 'views', 'siteViews');
+  const usersRef = doc(db, 'user_views', 'allUsers');
+
+  // Fonction pour se connecter anonymement
+  async function loginAnonymously() {
+    try {
+      const userCredential = await signInAnonymously(auth);
+      const user = userCredential.user;
+      console.log("Utilisateur connecté de manière anonyme :", user.uid);
+      return user.uid;  // Retourner l'ID de l'utilisateur anonyme
+    } catch (error) {
+      console.error("Erreur de connexion anonyme :", error.message);
+    }
+  }
+
+  // Fonction pour incrémenter le compteur si nécessaire
+  async function incrementViewCount() {
+    const userId = await loginAnonymously();  // Obtenir l'ID de l'utilisateur anonyme
+    const currentDate = new Date().toISOString().split('T')[0]; // Date actuelle en format YYYY-MM-DD
+
+    try {
+      const docSnap = await getDoc(usersRef);
+      let usersData = docSnap.exists() ? docSnap.data() : {};
+
+      // Vérifier si cet utilisateur existe et ses données sont toujours valides
+      const userData = usersData[userId] || { lastIncrementDate: null, incrementCount: 0, creationTime: new Date().toISOString() };
+
+      // Vérifier si les données de l'utilisateur sont expirées (plus de 24 heures)
+      const creationTime = new Date(userData.creationTime);
+      const currentTime = new Date();
+      const timeDifference = currentTime - creationTime; // Différence en millisecondes
+      const dayInMillis = 24 * 60 * 60 * 1000; // 24 heures en millisecondes
+
+      if (timeDifference > dayInMillis) {
+        // Si plus de 24 heures, réinitialiser les données de l'utilisateur
+        userData.lastIncrementDate = null;
+        userData.incrementCount = 0;
+        userData.creationTime = currentTime.toISOString();  // Réinitialiser le temps de création
+      }
+
+      // Vérifier si l'utilisateur a déjà incrémenté aujourd'hui
+      if (userData.lastIncrementDate === currentDate) {
+        // Si l'utilisateur a déjà incrémenté aujourd'hui
+        if (userData.incrementCount >= 2) {
+          console.log("Limite d'incrémentation atteinte pour aujourd'hui.");
+          return; // Ne rien faire si la limite de 2 incréments est atteinte
+        }
+        // Si moins de 2 incréments, on permet l'incrémentation
+        userData.incrementCount += 1;
+      } else {
+        // Si c'est un nouveau jour, réinitialiser les incréments
+        userData.lastIncrementDate = currentDate;
+        userData.incrementCount = 1; // Première incrémentation de la journée
+      }
+
+      // Mettre à jour les données de l'utilisateur dans le document global
+      usersData[userId] = userData;
+
+      // Enregistrer ou mettre à jour les données dans Firestore sous un seul document
+      await setDoc(usersRef, usersData);
+
+      // Mettre à jour le compteur global des vues
+      const viewsSnap = await getDoc(viewsRef);
+      if (viewsSnap.exists()) {
+        await updateDoc(viewsRef, { count: viewsSnap.data().count + 1 });
+      } else {
+        await setDoc(viewsRef, { count: 1 });
+      }
+
+    } catch (error) {
+      console.error("Erreur lors de l'incrémentation du compteur de vues :", error);
+    }
+  }
+
+  // Fonction pour afficher le nombre de vues sur la page
+  async function displayViewCount() {
+    try {
+      const docSnap = await getDoc(viewsRef);
+      if (docSnap.exists()) {
+        document.getElementById('viewsCounter').textContent = docSnap.data().count;
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'affichage des vues :", error);
+    }
+  }
+
+  // Exécuter les fonctions lorsque la page se charge
+  window.onload = function() {
+    incrementViewCount();
+    displayViewCount();
+  };
+</script>
+
+
+
+
+</head>
+
+    
+<body>
+    <header> 
+        <nav class="navv">
+            <div class="logo" style="text-align: center;">
+                
+                
+
+                <img src="images/logo/LOGO.png" height="80px" width="80px" style="border-radius: 0%;" id="sizelogo" klopioipo > <p style="color: rgb(66, 238, 106); font-size: 14px; position: absolute; padding-top: 10px;">Nombre de visiteurs :  <span id="viewsCounter">Chargement...</span></p>
+
+
+                
+                 
+                
+
+
+
+
+                 
+            </div>
+            <div class="menu-toggle" id="mobile-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-links">
+                
+                <li ><a href="#home" id="lis">Accueil</a></li>
+                <li ><a href="pregallery.html" id="lis">Galerie</a></li>
+                <li ><a href="bilan.html" id="lis">Bilan</a></li>
+                <li ><a href="#contact" id="lis">Contact</a></li>
+            
+            </ul>
+           
+        </nav>
+
+      
+
+        
+    </header>
+<section id="home" class="hero-section">
+        <div class="hero-content">
+           
+            <h1 id="dynamic-text"></h1>
+
+            <script>
+                const text = "Édu'Plus, vous souhaites la Bienvenue...";
+                let index = 0;
+        
+                function typeWriter() {
+                    if (index < text.length) {
+                        document.getElementById("dynamic-text").innerHTML += text.charAt(index);
+                        index++;
+                        setTimeout(typeWriter, 50); // Vitesse de l'effet d'écriture
+                    }
+                }
+        
+                typeWriter(); // Appeler la fonction pour démarrer l'effet
+            </script>
+
+  <p id="dynamic-offer" style="font-weight: bold;"></p>
+
+    <script>
+        const offerText = "Nous offrons les meilleurs services d'encadrement pour vos enfants.";
+        let offerIndex = 0;
+
+        function typeWriterOffer() {
+            if (offerIndex < offerText.length) {
+                document.getElementById("dynamic-offer").innerHTML += offerText.charAt(offerIndex);
+                offerIndex++;
+                setTimeout(typeWriterOffer, 50); // Vitesse de l'effet d'écriture
+            }
+        }
+
+        setTimeout(typeWriterOffer, 3000); // Attendre 5 secondes avant de démarrer l'effet d'écriture
+    </script>
+    
+    <br>
+     <a href="inscription.html" class="button" style="font-weight: bold" id="rejoind">*Nous Rejoindre*</a>  </section>
+
+    <br>
+    <section style="text-align: center; margin: 2px;">
+        <h2>Présentation</h2> <br>
+        <p>Bienvenue à <strong>Edu'Plus</strong>, votre structure de cours à domicile! <br>
+
+            Nous sommes un groupe d'étudiants en Master de l'Université de San-Pedro, unis par notre passion pour l'enseignement. En 2024, la structure  fut créée par Mr TAH BI YOUAN ARNAUD  étudiant à l'université de San-Pédro après le constat du manque de compétance et de professionnalisme des repetiteurs (auto-improvisé) de San-Pédro avec pour unique objectif de vous  offrir un soutien éducatif de qualité directement chez vous.
+            
+            Nos valeurs fondamentales :
+            
+            Excellence dans l'enseignement.
+            
+            Flexibilité pour s'adapter aux besoins de chaque élève.
+            
+            Proximité pour un apprentissage efficace et personnalisé.
+            
+            Notre équipe se compose d'étudiants spécialisés dans diverses matières, utilisant des méthodes pédagogiques modernes et interactives.</p>
+    </section>
+
+   
+    <section  id="services" class="services-section">
+        <h2 >Nos Principaux Services </h2>
+        <div class="services-container">
+            <div class="service-box">
+                <h3>Cours de Soutien Scolaire </h3>
+                <figure class="box-image"><img src="images/soutienscolaire1.jpg" alt="Description de l'image" width="auto" height="200vh" style="border-radius: 5%;" class="image-zoom"> </figure>  <br>
+                <p>Chez Edu'Plus, nous comprenons que chaque enfant a des besoins uniques. Nos cours de soutien scolaire sont conçus pour offrir une aide ciblée et efficace, adaptée au rythme et au niveau de chaque élève. Que ce soit pour combler des lacunes, approfondir des connaissances ou préparer des examens, nos enseignants qualifiés sont là pour accompagner votre enfant vers la réussite.</p>
+                
+
+            </div>
+            <div class="service-box">
+                <h3>Cours d'Alphabétisation</h3>
+                
+                <figure class="box-image"><img src="images/alphabetisation1.jpg" alt="Description de l'image" width="auto" height="200vh" style="border-radius: 5%" class="image-zoom"> </figure> <br>
+                 <p>Transformez votre vie grâce à nos cours d’alphabétisation, conçus pour vous ouvrir de nouvelles opportunités.
+
+                    Chez Edu'Plus, nous croyons fermement que l’alphabétisation est la clé de l’autonomie et de l’épanouissement personnel. Nos cours d’alphabétisation sont spécialement conçus pour aider les adultes et les jeunes à maîtriser les compétences essentielles en lecture et en écriture, indispensables pour réussir dans la vie quotidienne et professionnelle.</p>
+                 
+            </div>
+            <div class="service-box">
+                <h3>Prépa Examens et Concours</h3>
+                <figure class="box-image"><img src="images/prepaexamen1.jpg" alt="Description de l'image" width="auto" height="200vh" style="border-radius: 5%" class="image-zoom"> </figure> <br>
+                <p>Maximisez vos chances de réussite avec nos cours de préparation aux examens et concours, conçus pour vous mener vers l’excellence.
+                    Chez Edu'Plus, nous savons que la préparation aux examens et concours peut être un défi majeur. C’est pourquoi nous proposons des cours spécialisés pour vous aider à atteindre vos objectifs académiques et professionnels. Nos programmes sont conçus pour renforcer vos compétences, améliorer votre confiance et vous donner les outils nécessaires pour réussir.</p>
+            
+
+            </div>
+            <div class="service-box">
+                <h3>Cours Spécial d'Anglais</h3>
+                <figure class="box-image"><img src="images/specialanglais1.jpg" alt="Description de l'image" width="auto" height="200vh" style="border-radius: 5%" class="image-zoom"> </figure>  <br>
+                <p>Améliorez vos compétences en anglais avec nos cours spéciaux, conçus pour répondre à vos besoins spécifiques. Chez Edu'Plus, nous comprenons l’importance de maîtriser l’anglais dans le monde d’aujourd’hui. Nos cours d’anglais sont adaptés à tous les niveaux, que vous soyez débutant ou avancé. Grâce à notre approche personnalisée, vous développerez rapidement vos compétences en compréhension, expression orale et écrite, vous permettant ainsi de communiquer avec aisance et confiance dans toutes les situations.</p>
+                
+
+            </div>
+
+
+            <div class="service-box">
+                <h3>Cours d'Informatique</h3>
+                
+                <figure class="box-image"><img src="images/informatique1.jpg" alt="Description de l'image" width="auto" height="200vh" style="border-radius: 5%" class="image-zoom"> </figure> <br>
+                 <p> Explorez le monde numérique avec nos cours d’informatique, conçus pour tous les niveaux. Chez Edu'Plus, nous croyons que la maîtrise des outils informatiques est essentielle dans le monde moderne. Nos cours couvrent une large gamme de sujets, y compris la bureautique, avec des formations spécifiques sur Word, Excel, et PowerPoint. Apprenez à créer des documents professionnels, à analyser des données avec des feuilles de calcul, et à concevoir des présentations percutantes.</p>
+               
+            </div>
+            <div class="service-box">
+                <h3>Cours de Musique</h3>
+                <figure class="box-image"><img src="images/music1.jpg" alt="Description de l'image" width="auto" height="200vh" style="border-radius: 5%" class="image-zoom"> </figure> <br>
+                <p>Vous rêvez d’apprendre à jouer au piano, à la batterie  ou de perfectionner vos cordes vocales ? Nos cours de musique à domicile sont conçus pour répondre à vos besoins, quel que soit votre âge ou votre niveau. Que vous soyez débutant ou musicien confirmé, nous vous proposons des leçons adaptées, dispensées par des étudiants expérimentés et passionnés de musique.</p>
+               
+
+            </div>
+        </div>
+
+
+    </section>
+    
+    
+    <section id="services" class="services-section">
+        <h2>Nos Services Auxiliaires </h2>
+        <div class="services-container">
+            <div class="service-box">
+
+                <h3>Services Traiteurs</h3>
+                <figure class="box-image"><img src="images/servicetraiteur1.jpg" alt="Description de l'image" width="auto" height="350vh" style="border-radius: 5%" class="image-zoom"> </figure> <br>
+                <p>Nous sommes également disponible avec notre équipe pour travailler à la réuissite de vos différents évenements. Que se soit mariage, anniversaire 
+                    , réunion...
+                    <br> N'hésitez pas à nous contacter...
+                </p>
+               
+
+            </div>
+            <div class="service-box">
+                <h3>Montage Vidéo </h3>
+                <figure class="box-image"><img src="images/montagevideo1.jpg" alt="Description de l'image" width="auto" height="200vh" style="border-radius: 5%" class="image-zoom"> </figure> <br>
+                <p>Vous souhaitez apprendre à maîtriser le montage vidéo ou perfectionner vos compétences ? Nos cours à domicile sont conçus pour vous accompagner dans l'apprentissage des techniques de montage, quel que soit votre niveau. Que vous soyez débutant ou déjà expérimenté, nos formateurs passionnés vous guideront pas à pas pour réaliser des vidéos professionnelles. Apprenez à monter avec des outils modernes, directement depuis chez vous, à votre rythme.</p>
+               
+
+            </div>
+
+            <div class="service-box">
+                <h3>Création de Site Web</h3>
+                <figure class="box-image"><img src="images/siteweb1.jpg" alt="Description de l'image" width="auto" height="200vh" style="border-radius: 5%" class="image-zoom"> </figure> <br>
+                <p>Chez Edu'Plus, nous offrons des services de création de sites internet adaptés à vos besoins et objectifs. Que vous soyez une entreprise, un professionnel indépendant ou une association, nous vous aidons à bâtir un site web qui reflète votre identité et capte l'attention de votre audience.</p>
+               
+            </div>
+        </div>
+
+
+    </section>
+
+    <section style="text-align: center; margin: 2px;">
+        <h2>À Propos de Nous</h2> <br>
+        <p  > <strong>Edu'Plus</strong>, est une structure multi-service qui  vous offre des services de qualités et de proximité.
+            Nous sommes basés à san-pédro, précisément à l'université polytechnique de san-pédro.
+
+    </p>
+    </section>
+
+
+    <section id="contact" class="contact-section">
+        <br><br><h1>Contactez-nous</h1>
+        <h4 style="color: red"  class="num"><img src="images/logo/phone.png"> +2250574119560 / +2250769951079</h4>
+
+    <div id="social-icons" style="font-size: 0; ">
+        <a href="mailto:eduplussp@gmail.com"   target="_blank" style="font-size: 16px; text-decoration: none; padding: 0;" id="maillink">
+            <img src="images/logo/mail.png" alt="mail" class="zoom-image" id="mail-logo">
+
+        </a>
+
+        <a href="https://wa.me/+2250769951079?text=Bonjour Edu'Plus, j'aimerais échanger avec un responsable..."   target="_blank" style="font-size: 16px; text-decoration: none; padding: 0;" id="ClientLink" >
+            <img src="images/logo/WhatsApp.png" alt="WhatsApp" class="zoom-image" >
+         
+
+
+        </a>
+        
+        <a href="https://web.facebook.com/profile.php?id=61572585682303"   target="_blank" style="font-size: 16px; text-decoration: none; padding: 0;" id="facebooklink">
+            <img src="images/logo/facebook.png" alt="Facebook" class="zoom-image"> 
+        </a>
+    </div>
+
+
+<div>
+    <a href="https://www.google.ci/maps/place/Universit%C3%A9+Polytechnique+de+San+Pedro/@4.7854329,-6.7008582,17z/data=!3m1!4b1!4m6!3m5!1s0xf9617bcfeb94f73:0x2ea65489de1684bd!8m2!3d4.7854329!4d-6.6982833!16s%2Fg%2F11tcsqd27y?hl=fr&entry=ttu&g_ep=EgoyMDI1MDEwNy4wIKXMDSoASAFQAw%3D%3D"   target="_blank" style="font-size: 16px; text-decoration: none; padding: 0;" >
+        <img src="images/logo/localisation.png" alt="localisation" class="zoom-image" id="localisation-logo" >
+
+
+    </a ><span style="position: relative;font-size: x-large;"> <strong> université de san-pedro</strong></span>
+    
+    
+</div>
+   
+    
+    </section>
+
+
+    <section class="temoignages" >
+
+        <style>
+        
+        .temoignages {
+            padding: 2em 1em;
+            background: #f3f3f3f9;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+
+        .carousel {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .testimonial {
+            display: none;
+            text-align: center;
+            padding: 1em;
+        }
+        
+        .testimonial.active {
+            display: block;
+        }
+        
+        .commentaire {
+            font-style: italic;
+            color: #333;
+            margin-bottom: 1em;
+            font-size: 1.2em;
+        }
+        
+        .auteur {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .auteur .photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .auteur h3 {
+            color: #0056b3;
+            font-size: 1em;
+        }
+        
+        /* Flèches de navigation */
+        button {
+            background: none;
+            border: none;
+            color: #555;
+            font-size: 2em;
+            cursor: pointer;
+            margin: 0 10px;
+            outline: none;
+        }
+        
+        button:hover {
+            color: #75f64e;
+        }
+        
+        
+        
+        
+        .stars {
+            font-size: 1.5em;
+            color:rgb(195, 195, 75); /* Jaune pour les étoiles */
+            margin: 0.5em 0;
+            letter-spacing: 5px;
+            display: inline-block;
+        }
+        
+        </style>
+        
+        
+                <h2><span>Nos clients parlent...</span></h2>
+        
+        
+                <div class="testimonial active">
+                    <p class="commentaire">"Mon fils a toujours eu du mal avec certaines matières, mais depuis qu'il suit des cours de soutien scolaire avec Edu'Plus, il a repris confiance en lui et ses notes se sont considérablement améliorées."</p>
+                    <div class="stars">
+                        ★★★★★
+                    </div>
+                    <div class="auteur">
+                        <img src="images/mariam.jpg" alt="Mariama Diallo" class="photo">
+                        <h3>Mariama Diallo</h3>
+                    </div>
+                </div>
+                
+                <div class="testimonial">
+                    <p class="commentaire">"Edu'Plus m'a vraiment aidé à comprendre l'informatique, même en partant de zéro. Les cours sont clairs, pratiques, et très interactifs. Je recommande vivement, surtout si vous êtes débutant !"</p>
+                    <div class="stars">
+                        ★★★★☆
+                    </div>
+                    <div class="auteur">
+                        <img src="john.jpg" alt="Kouakou jeans fabrice" class="photo">
+                        <h3>Kouakou jeans fabrice</h3>
+                    </div>
+                </div>
+                
+                <div class="testimonial">
+                    <p class="commentaire">"Expérience exceptionnelle ! J'ai appris énormément et les cours sont très enrichissants."</p>
+                    <div class="stars">
+                        ★★★★★
+                    </div>
+                    <div class="auteur">
+                        <img src="sophie.jpg" alt="Tié lou adéline" class="photo">
+                        <h3>Tié lou adéline</h3>
+                    </div>
+        
+                </div>
+        
+                <div class="testimonial active">
+                    <p class="commentaire">"Les cours d'anglais d'Edu'Plus sont super efficaces. Grâce à leur méthode d'enseignement, j'ai beaucoup amélioré ma compréhension orale et mon vocabulaire. "</p>
+                    <div class="stars">
+                        ★★★★☆
+                    </div>
+                    <div class="auteur">
+                        <img src="mariama.jpg" alt="Touré makenyfé" class="photo">
+                        <h3>Touré makenyfé</h3>
+                    </div>
+                </div>
+               
+        
+        
+        
+        
+               
+        
+        
+        
+        
+        
+        
+                <!-- Flèches pour naviguer -->
+                <button class="prev" onclick="changerTemoignage(-1)">&#10094;</button>
+                <button class="next" onclick="changerTemoignage(1)">&#10095;</button>
+            </section>
+        
+            <script src="script22.js"></script>
+
+
+
+    <script>
+    document.getElementById('ClientLink').addEventListener('click', function() {
+      fbq('track', 'contactez-nous_whatsappParents');
+    });
+  </script>
+
+    <script>
+    document.getElementById('rejoind').addEventListener('click', function() {
+      fbq('track', 'contactez-nous_whatsappEnseignant');
+    });
+  </script>
+
+    
+    <script>
+    document.getElementById('facebooklin').addEventListener('click', function() {
+      fbq('track', 'contactez-nous_FacebookParents');
+    });
+  </script>
+
+    <script>
+    document.getElementById('maillink').addEventListener('click', function() {
+      fbq('track', 'contactez-nous_GmailParents');
+    });
+  </script>
+
+
+    <footer style="font-size: 10px;">
+        <p> &copy; 2024 - Édu'Plus, Coded by <a href="https://wa.me/+2250574119560"   style=" color: white;text-decoration: none; font-style: italic;">&lt;/&gt;Tah Bi Youan Arnaud&lt;/&gt;</a>, Tous droits réservés.</p>
+    </footer>
+
+    <script src="script.js"></script>
+  
+
+  
+</body>
+<!-- TAH BI YOUAN ARNAUD: 0574119560-->
+</html>
+
+
