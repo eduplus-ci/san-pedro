@@ -396,24 +396,6 @@ form {
        gap: 10px; 
     }
     
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     .nav-links {
         display: none;
         flex-direction: column;
@@ -429,13 +411,28 @@ form {
               
             } 
 
-            .nav-links {
-                  margin-top: 60px;
-                  text-align: right;
+            #lis {
+        color: rgb(0, 0, 0);
+        font-weight: bold;
+       
+ 
+    }
     
-                   list-style: none;
-                   display: flex;
-                    gap: 10px; 
+    
+    
+    .nav-links {
+        margin-top: 60px;
+        text-align: right;
+    
+       list-style: none;
+       display: flex;
+       gap: 10px; 
+    }
+    
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
     }
     
         
@@ -443,6 +440,8 @@ form {
         
         
         }
+
+
 
     .nav-links.active {
         display: flex;
