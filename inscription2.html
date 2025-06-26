@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription Apprenant - Edu'Plus</title>
+    <link rel="stylesheet" href="styles1.css">
+    <link rel="icon" href="images/logo/LOGO.png"/>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        (function(){
+            emailjs.init("LW4veR9wPiL_CT1wh"); // Ton User ID EmailJS
+        })();
+    </script>
+</head>
+<body>
+
+<h1 id="dynamic-text">
+    <img src="images/logo/LOGO.png" class="sizelogo"><br>
+</h1>
+
+<script>
+    const text = "Inscrivez votre/vos enfant(s) chez Edu'Plus !";
+    let index = 0;
+    function typeWriter() {
+        if (index < text.length) {
+            document.getElementById("dynamic-text").innerHTML += text.charAt(index);
+            index++;
+            setTimeout(typeWriter, 50);
+        }
+    }
+    typeWriter();
+</script>
+
+<form id="inscriptionForm">
+    <label for="parent">Nom et prénom du parent ou tuteur légal</label>
+    <input type="text" id="parent" name="parent" required placeholder="Ex : Koffi Marie Claire"><br>
+
+    <label for="appel">Numéro de téléphone (Appel)</label>
+    <input type="tel" id="appel" name="appel" required placeholder="+225xxxxxxxx"><br>
+
+    <label for="whatsapp">Numéro de téléphone (WhatsApp)</label>
+    <input type="tel" id="whatsapp" name="whatsapp" placeholder="+225xxxxxxxx"><br>
+
+    <label for="adresse">Lieu de résidence habituel</label>
+    <input type="text" id="adresse" name="adresse" required placeholder="San-Pédro, quartier Bardot"><br>
+
+    <label for="nombre">Nombre d’apprenant(e)s concerné(e)s</label>
+    <input type="number" id="nombre" name="nombre" required placeholder="1, 2, 3..."><br>
+
+    <label for="classes">Niveaux ou classes des apprenant(e)s</label>
+    <input type="text" id="classes" name="classes" required placeholder="CE2, 6e, 1ère D"><br>
+
+    <a href="bilan.html" class="retour">Retour</a>
+    <button type="submit" class="envoie">Envoyer</button>
+</form>
+
+<script>
+document.getElementById('inscriptionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const formData = new FormData(form);
+
+    const params = {
+        parent: formData.get('parent'),
+        appel: formData.get('appel'),
+        whatsapp: formData.get('whatsapp') || "Non renseigné",
+        adresse: formData.get('adresse'),
+        nombre: formData.get('nombre'),
+        classes: formData.get('classes')
+    };
+
+    emailjs.send("service_EduPlus", "template_inscription", params)
+        .then(() => {
+            alert("Inscription envoyée avec succès !");
+            form.reset();
+        }, (error) => {
+            alert("Une erreur est survenue : " + JSON.stringify(error));
+        });
+});
+</script>
+
+</body>
+</html>
