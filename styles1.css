@@ -1,0 +1,153 @@
+body {
+    font-family: Arial, sans-serif;
+    margin-top: 0%;
+
+    padding: 20px;
+    background-image: url(images/okoko.jpg);
+    background-repeat: no-repeat; /* Pour éviter la répétition de l'image */
+    background-size: cover; /* Pour couvrir toute la zone du body */
+}
+
+h1 {
+    text-align: center;
+    color: rgb(10, 10, 10); /* Texte en blanc */
+    font-size: 4vw; /* La taille de la police est définie à 6% de la largeur de la fenêtre */
+
+}
+.sizelogo {
+
+
+     height: 200px;
+     width: 200px;
+
+}
+
+@media (max-width: 340px) {
+    label{
+        font-size: 4vw;
+       
+      
+    } 
+
+}
+
+
+@media (max-width: 425px) {
+    .sizelogo{
+       height: 90px;
+       width: 90px
+    } 
+}
+
+
+form {
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #000;
+    border-radius: 10px;
+    background-color: #dadadae6; /* Fond noir pour le formulaire */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+label {
+    font-weight: bold;
+    color: rgb(10, 9, 9); /* Texte en blanc */
+    width: 100%; /* S'assurer que le label occupe toute la largeur du formulaire */
+    text-align: center;
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #ffffff; /* Fond gris foncé pour les champs */
+    color: rgb(0, 0, 0); /* Texte en blanc */
+    text-align: center;
+}
+
+button {
+    background-color: #333; /* Bouton vert */
+    color: white; 
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px; /* Espace au-dessus du bouton */
+}
+
+
+.retour {
+    display: inline-block; /* Pour contrôler la taille du conteneur */
+    background-color: #333; /* Bouton vert */
+    color: white; 
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px; /* Espace au-dessus du bouton */
+    right: 20%; 
+    position: relative;
+    text-decoration: none;
+
+}
+
+.envoie {
+    left: 20%;
+     position: relative; 
+      top: -59px;
+}
+
+@media (max-width: 244px) {
+
+    .envoie {
+       
+        padding: 4px 2px;
+        font-size: 10px;
+        top: -52px;
+        left: 30%; 
+        position: relative;
+    }
+
+
+    .retour {
+        padding: 4px 6px;
+        font-size: 10px;
+        right: 30%; 
+         position: fixed;
+    }
+}
+
+
+@media (max-width: 412px) {
+
+    .envoie {
+        padding: 4px 2px;
+        left: 30%; 
+        position: relative;
+       
+    }
+    .retour {
+        padding: 4px 6px;
+        top: -12px;
+        right: 30%; 
+        position: relative;
+       
+    }
+}
+
+button:hover {
+    background-color: #45a049; /* Légère variation de vert au survol */
+}
+
+a:hover {
+    background-color: #45a049; /* Légère variation de vert au survol */
+}

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr" style="padding-top: 95px;">
+<head>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '2096066194164987');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=2096066194164987&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Edu'Plus San-Pédro</title>
+  <meta name="description" content="Education et renforcement de capacité..." />
+  <!-- Open Graph -->
+  <meta property="og:title" content="Edu'Plus">
+  <meta property="og:description" content="Education et renforcement de capacité...">
+  <meta property="og:image" content=" https://eduplus-ci.github.io/san-pedro/images/logo/LOGO.jpg" />
+  <meta property="og:url" content="https://eduplus-ci.github.io/san-pedro/images/logo/LOGO.jpg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="images/logo/LOGO.png"/>
+
+<!-- Système de vue avec gestion de l'affichage du nombre de vues -->
+<script type="module">
+  // Importer les fonctions nécessaires du SDK Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+
+  // Configuration de ton application Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCIbhV4z1XTnptBldtJxfh3eK-4Wnv1GQA",
+    authDomain: "tahbi-dbda2.firebaseapp.com",
+    projectId: "tahbi-dbda2",
+    storageBucket: "tahbi-dbda2.firebasestorage.app",
+    messagingSenderId: "574600128142",
+    appId: "1:574600128142:web:35e31de1fcce720ce80bdf"
+  };
+
+  // Initialiser Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // Référence au document Firestore pour les vues et utilisateurs anonymes
+  const viewsRef = doc(db, 'views', 'siteViews');
+  const usersRef = doc(db, 'user_views', 'allUsers');
+
+  // Fonction pour se connecter anonymement
+  async function loginAnonymously() {
+    try {
+      const userCredential = await signInAnonymously(auth);
+      const user = userCredential.user;
+      console.log("Utilisateur connecté de manière anonyme :", user.uid);
+      return user.uid;  // Retourner l'ID de l'utilisateur anonyme
+    } catch (error) {
+      console.error("Erreur de connexion anonyme :", error.message);
+    }
+  }
+
+  // Fonction pour incrémenter le compteur si nécessaire
+  async function incrementViewCount() {
+    const userId = await loginAnonymously();  // Obtenir l'ID de l'utilisateur anonyme
+    const currentDate = new Date().toISOString().split('T')[0]; // Date actuelle en format YYYY-MM-DD
+
+    try {
+      const docSnap = await getDoc(usersRef);
+      let usersData = docSnap.exists() ? docSnap.data() : {};
+
+      // Vérifier si cet utilisateur existe et ses données sont toujours valides
+      const userData = usersData[userId] || { lastIncrementDate: null, incrementCount: 0, creationTime: new Date().toISOString() };
+
+      // Vérifier si les données de l'utilisateur sont expirées (plus de 24 heures)
+      const creationTime = new Date(userData.creationTime);
+      const currentTime = new Date();
+      const timeDifference = currentTime - creationTime; // Différence en millisecondes
+      const dayInMillis = 24 * 60 * 60 * 1000; // 24 heures en millisecondes
+
+      if (timeDifference > dayInMillis) {
+        // Si plus de 24 heures, réinitialiser les données de l'utilisateur
+        userData.lastIncrementDate = null;
+        userData.incrementCount = 0;
+        userData.creationTime = currentTime.toISOString();  // Réinitialiser le temps de création
+      }
+
+      // Vérifier si l'utilisateur a déjà incrémenté aujourd'hui
+      if (userData.lastIncrementDate === currentDate) {
+        // Si l'utilisateur a déjà incrémenté aujourd'hui
+        if (userData.incrementCount >= 2) {
+          console.log("Limite d'incrémentation atteinte pour aujourd'hui.");
+          return; // Ne rien faire si la limite de 2 incréments est atteinte
+        }
+        // Si moins de 2 incréments, on permet l'incrémentation
+        userData.incrementCount += 1;
+      } else {
+        // Si c'est un nouveau jour, réinitialiser les incréments
+        userData.lastIncrementDate = currentDate;
+        userData.incrementCount = 1; // Première incrémentation de la journée
+      }
+
+      // Mettre à jour les données de l'utilisateur dans le document global
+      usersData[userId] = userData;
+
+      // Enregistrer ou mettre à jour les données dans Firestore sous un seul document
+      await setDoc(usersRef, usersData);
+
+      // Mettre à jour le compteur global des vues
+      const viewsSnap = await getDoc(viewsRef);
+      if (viewsSnap.exists()) {
+        await updateDoc(viewsRef, { count: viewsSnap.data().count + 1 });
+      } else {
+        await setDoc(viewsRef, { count: 1 });
+      }
+
+    } catch (error) {
+      console.error("Erreur lors de l'incrémentation du compteur de vues :", error);
+    }
+  }
+
+  // Fonction pour afficher le nombre de vues sur la page
+  async function displayViewCount() {
+    try {
+      const docSnap = await getDoc(viewsRef);
+      if (docSnap.exists()) {
+        document.getElementById('viewsCounter').textContent = docSnap.data().count;
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'affichage des vues :", error);
+    }
+  }
+
+  // Exécuter les fonctions lorsque la page se charge
+  window.onload = function() {
+    incrementViewCount();
+    displayViewCount();
+  };
+</script>
+
+
+
+</head>
+<body>
+    <header> 
+        <nav class="navv">
+            <div class="logo" style="text-align: center;">
+                
+                
+
+                 <img src="images/logo/LOGO.png" height="80px" width="80px" style="border-radius: 45%;" id="sizelogo" klopioipo > <p style="color: rgb(66, 238, 106); font-size: 14px; position: absolute; padding-top: 10px;">Nombre de visiteurs : <span id="viewsCounter">Chargement...</span></p>
+
+
+                
+                 
+                 
+
+
+
+
+                 
+            </div>
+            <div class="menu-toggle" id="mobile-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-links">
+                
+                <li ><a href="index.html#home" id="lis">Accueil</a></li>
+                <li ><a href="pregallery.html" id="lis">Gallery</a></li>
+                <li ><a href="bilan.html" id="lis">Bilan</a></li>
+                <li ><a href="index.html#contact" id="lis">Contact</a></li>
+            
+            </ul>
+           
+        </nav>
+    </header>
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class="globale">
+
+
+    
+        <div class="gallery">
+            
+          <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br> <strong>ACTUALISATION EN COURS...</strong> </figure>
+          <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+          <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+          <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+          <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+          <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+          <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+          <figure  class="imagetext"   style="text-decoration: none;" > <a href="images/photo1.jpg"><img src="images/photo1.jpg" alt="Photo 1"  class="gallery1" loading="lazy"> </a> <br> <br><strong>ACTUALISATION EN COURS...</strong> </figure>
+
+
+           
+            
+        </div>
+    
+    
+    </div>
+
+
+
+
+
+
+    <style>
+
+        .button-container {
+            display: flex; /* Utilise Flexbox pour aligner les éléments horizontalement */
+            gap: 10px; /* Ajoute un espace entre les boutons */
+            justify-content: center; /* Centrer horizontalement les boutons dans le conteneur */
+        }
+
+        .button-container back-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .back-button {
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            background-color:  #66bd3a;
+        }
+        </style>
+
+
+     <div class="button-container">
+
+        <button onclick="history.back()" class="back-button">Retour</button>
+        <button  onclick="lient" class="back-button">Suivant</button>
+        
+
+     </div>   
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <footer style="font-size: 10px;">
+        <p> &copy; 2024 - Édu'Plus, Coded by <a href="https://wa.me/+2250574119560"   style=" color: white;text-decoration: none; font-style: italic;">&lt;/&gt;Tah Bi Youan Arnaud&lt;/&gt;</a>, Tous droits réservés.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

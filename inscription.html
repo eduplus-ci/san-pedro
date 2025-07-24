@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire de Candidature</title>
+    <link rel="stylesheet" href="styles1.css">
+    <link rel="icon" href="images/logo/LOGO.png"/>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        (function(){
+            emailjs.init("LW4veR9wPiL_CT1wh"); // Remplace par ton vrai User ID EmailJS
+        })();
+    </script>
+</head>
+<body>
+
+<h1 id="dynamic-text">
+    <img src="images/logo/LOGO.png"  class="sizelogo">
+    <br>
+</h1>
+
+<script>
+    const text = "Rejoignez notre équipe d'enseignants!!!";
+    let index = 0;
+    function typeWriter() {
+        if (index < text.length) {
+            document.getElementById("dynamic-text").innerHTML += text.charAt(index);
+            index++;
+            setTimeout(typeWriter, 50);
+        }
+    }
+    typeWriter();
+</script>
+
+<form id="candidatureForm">
+    <label for="nom">Nom et Prénom</label>
+    <input type="text" id="nom" name="nom" required placeholder="Tah Bi Youan Arnaud"><br>
+
+    <label for="telephone">Numéro (Whatsapp)</label>
+    <input type="tel" id="telephone" name="telephone" required required placeholder="+225xxxxxxxxxx"><br>
+
+    <label for="quartier">Lieu de Résidence</label>
+    <input type="text" id="quartier" name="quartier" required placeholder="San-pédro (quartier Lac)"><br>
+
+    <label for="matiere1">Matière 1</label>
+    <input type="text" id="matiere1" name="matiere1" required placeholder="Ex: Mathématique"><br>
+
+    <label for="matiere2">Matière 2</label>
+    <input type="text" id="matiere2" name="matiere2" required placeholder="Ex: physique-chimie"><br>
+
+    <label for="matiere3">Matière 3 (optionnelle)</label>
+    <input type="text" id="matiere3" name="matiere3" placeholder="Ex: Science De la Vie et de la Terre (S.V.T)"><br>
+
+    <a href="index.html" class="retour">Retour</a>
+    <button type="submit" class="envoie">Envoyer</button>
+</form>
+
+<script>
+document.getElementById('candidatureForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const formData = new FormData(form);
+
+    const params = {
+        nom: formData.get('nom'),
+        telephone: formData.get('telephone'),
+        quartier: formData.get('quartier'),
+        matiere1: formData.get('matiere1'),
+        matiere2: formData.get('matiere2'),
+        matiere3: formData.get('matiere3') || "Non renseignée"
+    };
+
+    emailjs.send("service_EduPlus", "template_g6eukou", params)
+        .then(() => {
+            alert("Votre candidature a été envoyée avec succès !");
+            form.reset();
+        }, (error) => {
+            alert("Une erreur est survenue : " + JSON.stringify(error));
+        });
+});
+</script>
+
+</body>
+</html>
