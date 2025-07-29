@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr" style="padding-top: 100px;">
+<head>
+
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Edu'Plus San-Pédro</title>
+  <meta name="description" content="Education et renforcement de capacité..." />
+  <!-- Open Graph -->
+  <meta property="og:title" content="Edu'Plus">
+  <meta property="og:description" content="Education et renforcement de capacité...">
+  <meta property="og:image" content=" https://eduplus-ci.github.io/san-pedro/images/logo/LOGO.jpg" />
+  <meta property="og:url" content="https://eduplus-ci.github.io/san-pedro/images/logo/LOGO.jpg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="images/logo/LOGO.png"/>
+
+
+  <!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '2096066194164987');
+fbq('track', 'PageView');
+fbq('track', 'VuePageBilan');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=2096066194164987&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+
+
+
+<!-- Système de vue avec gestion de l'affichage du nombre de vues -->
+<script type="module">
+  // Importer les fonctions nécessaires du SDK Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+
+  // Configuration de ton application Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCIbhV4z1XTnptBldtJxfh3eK-4Wnv1GQA",
+    authDomain: "tahbi-dbda2.firebaseapp.com",
+    projectId: "tahbi-dbda2",
+    storageBucket: "tahbi-dbda2.firebasestorage.app",
+    messagingSenderId: "574600128142",
+    appId: "1:574600128142:web:35e31de1fcce720ce80bdf"
+  };
+
+  // Initialiser Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // Référence au document Firestore pour les vues et utilisateurs anonymes
+  const viewsRef = doc(db, 'views', 'siteViews');
+  const usersRef = doc(db, 'user_views', 'allUsers');
+
+  // Fonction pour se connecter anonymement
+  async function loginAnonymously() {
+    try {
+      const userCredential = await signInAnonymously(auth);
+      const user = userCredential.user;
+      console.log("Utilisateur connecté de manière anonyme :", user.uid);
+      return user.uid;  // Retourner l'ID de l'utilisateur anonyme
+    } catch (error) {
+      console.error("Erreur de connexion anonyme :", error.message);
+    }
+  }
+
+  // Fonction pour incrémenter le compteur si nécessaire
+  async function incrementViewCount() {
+    const userId = await loginAnonymously();  // Obtenir l'ID de l'utilisateur anonyme
+    const currentDate = new Date().toISOString().split('T')[0]; // Date actuelle en format YYYY-MM-DD
+
+    try {
+      const docSnap = await getDoc(usersRef);
+      let usersData = docSnap.exists() ? docSnap.data() : {};
+
+      // Vérifier si cet utilisateur existe et ses données sont toujours valides
+      const userData = usersData[userId] || { lastIncrementDate: null, incrementCount: 0, creationTime: new Date().toISOString() };
+
+      // Vérifier si les données de l'utilisateur sont expirées (plus de 24 heures)
+      const creationTime = new Date(userData.creationTime);
+      const currentTime = new Date();
+      const timeDifference = currentTime - creationTime; // Différence en millisecondes
+      const dayInMillis = 24 * 60 * 60 * 1000; // 24 heures en millisecondes
+
+      if (timeDifference > dayInMillis) {
+        // Si plus de 24 heures, réinitialiser les données de l'utilisateur
+        userData.lastIncrementDate = null;
+        userData.incrementCount = 0;
+        userData.creationTime = currentTime.toISOString();  // Réinitialiser le temps de création
+      }
+
+      // Vérifier si l'utilisateur a déjà incrémenté aujourd'hui
+      if (userData.lastIncrementDate === currentDate) {
+        // Si l'utilisateur a déjà incrémenté aujourd'hui
+        if (userData.incrementCount >= 2) {
+          console.log("Limite d'incrémentation atteinte pour aujourd'hui.");
+          return; // Ne rien faire si la limite de 2 incréments est atteinte
+        }
+        // Si moins de 2 incréments, on permet l'incrémentation
+        userData.incrementCount += 1;
+      } else {
+        // Si c'est un nouveau jour, réinitialiser les incréments
+        userData.lastIncrementDate = currentDate;
+        userData.incrementCount = 1; // Première incrémentation de la journée
+      }
+
+      // Mettre à jour les données de l'utilisateur dans le document global
+      usersData[userId] = userData;
+
+      // Enregistrer ou mettre à jour les données dans Firestore sous un seul document
+      await setDoc(usersRef, usersData);
+
+      // Mettre à jour le compteur global des vues
+      const viewsSnap = await getDoc(viewsRef);
+      if (viewsSnap.exists()) {
+        await updateDoc(viewsRef, { count: viewsSnap.data().count + 1 });
+      } else {
+        await setDoc(viewsRef, { count: 1 });
+      }
+
+    } catch (error) {
+      console.error("Erreur lors de l'incrémentation du compteur de vues :", error);
+    }
+  }
+
+  // Fonction pour afficher le nombre de vues sur la page
+  async function displayViewCount() {
+    try {
+      const docSnap = await getDoc(viewsRef);
+      if (docSnap.exists()) {
+        document.getElementById('viewsCounter').textContent = docSnap.data().count;
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'affichage des vues :", error);
+    }
+  }
+
+  // Exécuter les fonctions lorsque la page se charge
+  window.onload = function() {
+    incrementViewCount();
+    displayViewCount();
+  };
+</script>
+
+ <script src="script.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+ <style>
+
+    
+        :root {
+            --primary: #00a1e1; /* Bleu Édu'Plus */
+            --secondary: #66bd3a; /* Vert Édu'Plus */
+            --dark: #003366;
+            --light: #f5f7fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: var(--light);
+            margin: 0;
+            padding-top: 80px; /* Pour compenser le header fixe */
+        }
+        
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        h2 {
+            color: var(--dark);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+        
+        .stats-highlight {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            border-top: 4px solid var(--secondary);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .success-stories {
+            margin: 3rem 0;
+        }
+        
+        .story-card {
+            background: white;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .story-title {
+            color: var(--dark);
+            margin-top: 0;
+        }
+        
+        .testimonials {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .testimonial-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .testimonial-card:before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--secondary);
+            opacity: 0.2;
+            position: absolute;
+            top: 0;
+            left: 10px;
+        }
+        
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .testimonial-author {
+            font-weight: bold;
+            color: var(--dark);
+        }
+        
+        .stars {
+            color: #FFD700; /* Couleur or pour les étoiles */
+            margin-bottom: 0.5rem;
+        }
+        
+        .cta-section {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 3rem 1rem;
+            margin: 3rem 0;
+            border-radius: 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: #5aad32;
+        }
+        
+        footer {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-highlight {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+   
+    
+</head>
+<body style="text-align: center; ">
+    <header> 
+        <nav class="navv">
+            <div class="logo" style="text-align: center;">
+                
+                
+
+                 <img src="images/logo/LOGO.png" height="80px" width="80px" style="border-radius: 45%;" id="sizelogo" klopioipo > <p style="color: rgb(66, 238, 106); font-size: 14px; position: absolute; padding-top: 10px;">Nombre de visiteurs : <span id="viewsCounter">Chargement...</span></p>
+
+
+                
+                 
+                
+
+
+
+
+                 
+            </div>
+            <div class="menu-toggle" id="mobile-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-links">
+                
+                <li ><a href="index.html#home" id="lis">Accueil</a></li>
+                <li ><a href="gallery.html" id="lis">Gallery</a></li>
+                <li ><a href="" id="lis">Bilan</a></li>
+                <li ><a href="index.html#contact" id="lis">Contact</a></li>
+            
+            </ul>
+           
+        </nav>
+    </header>
+
+
+
+
+
+
+    
+
+    <div class="container">
+        <section>
+            <h2>Nos Résultats Clés</h2>
+            <p>Une année exceptionnelle pour Édu'Plus San-Pédro avec des preuves tangibles de réussite :</p>
+            
+            <div class="stats-highlight">
+                <div class="stat-card">
+                    <div class="stat-number">250</div>
+                    <div class="stat-label">Élèves accompagnés</div>
+                    <p>+30% vs 2023</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">95%</div>
+                    <div class="stat-label">Satisfaction parents</div>
+                    <p>Enquête indépendante</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">2,3 pts</div>
+                    <div class="stat-label">Progression moyenne</div>
+                    <p>Sur les bulletins</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">10</div>
+                    <div class="stat-label">Ateliers innovants</div>
+                    <p>De coding à la musique</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="success-stories">
+            <h2>Nos Réussites</h2>
+            
+            <div class="story-card">
+                <h3 class="story-title">De 8 à 16/20 en mathématiques en 6 mois</h3>
+                <p>"Avant Édu'Plus, je détestais les maths. Aujourd'hui, c'est ma matière préférée et j'ai gagné assez de confiance pour aider mes camarades !"</p>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p><strong>Koffi D., 14 ans</strong> - Lycée Moderne de San-Pédro</p>
+            </div>
+            
+            <div class="story-card">
+                <h3 class="story-title">Admission en Médecine après notre coaching</h3>
+                <p>"Le programme personnalisé d'Édu'Plus m'a donné la méthodologie pour réussir mon bac avec mention et intégrer la faculté de médecine."</p>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                </div>
+                <p><strong>Aïcha T., 18 ans</strong> - Lycée Inagohi de San-Pédro</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Témoignages de Parents</h2>
+            
+            <div class="testimonials">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Depuis que mon fils suit les cours chez Édu'Plus, ses résultats ont doublé. Mais surtout, il a retrouvé le plaisir d'apprendre !"</p>
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-author">— M. Diallo, parent à San-Pédro</p>
+                </div>
+                
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Les cours d'anglais avec les outils numériques ont changé la donne. Ma fille est maintenant première de sa classe !"</p>
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-author">— Mme Koné, parent à San-Pédro</p>
+                </div>
+                
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Le service traiteur scolaire est révolutionnaire. Mon enfant mange équilibré et je gagne 2h par jour !"</p>
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <p class="testimonial-author">— M. Kouadio, parent à San-Pédro</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="inscription" class="cta-section">
+            <h2>Prêt à rejoindre la famille Édu'Plus ?</h2>
+            <p>Inscrivez votre enfant pour la rentrée 2025-2026 et bénéficiez de :</p>
+            <ul style="text-align: left; max-width: 500px; margin: 1rem auto;">
+                <li>Un bilan pédagogique gratuit</li>
+                <li>Un programme personnalisé</li>
+                <li>10% de réduction et 1 mois de formation en robotique offert par Edu'Plus pour les inscriptions avant le 30 Septembre</li>
+            
+            </ul>
+            <a href="inscription2.html" class="btn" id="InscriptionElevesB">S'inscrire maintenant</a>
+            <p style="margin-top: 1rem;">Ou appelez-nous au <strong>05 74 11 95 60 / 07 69 95 10 79</strong></p>
+        </section>
+    </div>
+
+
+
+    <script>
+        // Script pour le menu mobile (identique à votre index.html)
+        document.getElementById('mobile-menu').addEventListener('click', function() {
+            document.querySelector('.nav-links').classList.toggle('active');
+        });
+
+        // Système de compteur de vues (identique à votre index.html)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Votre code Firebase ici...
+        });
+    </script>
+
+        <script>
+    document.getElementById('InscriptionElevesB').addEventListener('click', function() {
+      fbq('track', 'ArrivéInscriptionElèvesViaButtonPageBilan');
+    });
+  </script>
+
+
+
+
+
+   
+
+
+  <footer style="font-size: 10px; padding: 8px;">
+    <p> &copy; 2024 - Édu'Plus, Coded by <a href="https://wa.me/+2250574119560"   style=" color: white;text-decoration: none; font-style: italic;">&lt;/&gt;Tah Bi Youan Arnaud&lt;/&gt;</a>, Tous droits réservés.</p>
+</footer>
+
+  
+   
+</body>
+
+</html>
+
